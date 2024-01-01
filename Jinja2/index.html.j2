@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Nginx</title>
+  </head>
+  <body>
+    <p>Les différentes adresses IP sont :</p>
+    {% for hostname in groups['web'] -%}
+	<li>{{ loop.index }} : {{ hostname }} {% if inventory_hostname == hostname %}(serveur actuel){% endif %}</li>
+	{%- endfor %}
+  </body>
+</html>

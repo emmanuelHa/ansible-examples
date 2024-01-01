@@ -1,0 +1,8 @@
+---
+- name: Copy Fedora index file
+  copy:
+    src: index-Fedora.html
+    dest: /usr/share/nginx/html/index.html
+    owner: webadmin
+    group: webadmin
+    mode: 0644

@@ -1,0 +1,8 @@
+---
+- name: Copy Debian index file
+  copy:
+    src: index-Debian.html
+    dest: /usr/share/nginx/html/index.html
+    owner: webadmin
+    group: webadmin
+    mode: 0644

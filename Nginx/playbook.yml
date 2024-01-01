@@ -1,0 +1,63 @@
+---
+- name: Install and configure Nginx
+  hosts: '{{env}}'
+  become: true
+  tasks:
+  - name: Install Nginx
+    apt:
+      name: nginx
+      state: present
+      update_cache: true
+
+  - name: Create user and group
+    block:
+      - name: Create group
+        group:
+          name: webadmin
+          state: present
+      - name: Create user
+        user:
+          name: webadmin
+          group: webadmin
+          shell: /bin/bash
+
+  - name: Copy Nginx configuration file
+    copy:
+      src: nginx.conf
+      dest: /etc/nginx/nginx.conf
+      owner: webadmin
+      group: webadmin
+      mode: 0644
+    notify: Restart Nginx
+
+  # - name: Copy Debian index file
+  #   copy:
+  #     src: index-Debian.html
+  #     dest: /usr/share/nginx/html/index.html
+  #     owner: webadmin
+  #     group: webadmin
+  #     mode: 0644
+  #   when: ansible_distribution == 'Debian'
+    
+  # - name: Copy Debian index file
+  #   copy:
+  #     src: index-Fedora.html
+  #     dest: /usr/share/nginx/html/index.html
+  #     owner: webadmin
+  #     group: webadmin
+  #     mode: 0644
+  #   when: ansible_distribution == 'Fedora'
+
+  - name: Execute Debian tasks
+    include_tasks: config-Debian.yml
+    when: ansible_distribution == 'Debian'
+    
+  - name: Execute Fedora tasks
+    include_tasks: config-Fedora.yml
+    when: ansible_distribution == 'Fedora'
+
+  handlers:
+  - name: Restart Nginx
+    service:
+      name: nginx
+      state: restarted

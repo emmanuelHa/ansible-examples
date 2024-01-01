@@ -1,0 +1,92 @@
+---
+- name: Install and configure Nginx
+  hosts: web
+  become: true
+  handlers:
+  - name: Restart Nginx
+    service:
+      name: nginx
+      state: restarted
+  tasks:
+  - name: Install Nginx
+    apt:
+      name: nginx
+      state: present
+      update_cache: true
+
+  - name: Create user and group
+    block:
+      - name: Create group
+        group:
+          name: webadmin
+          state: present
+      - name: Create user
+        user:
+          name: webadmin
+          group: webadmin
+          shell: /bin/bash
+
+  - name: Copy Nginx configuration file
+    copy:
+      src: nginx.conf
+      dest: /etc/nginx/nginx.conf
+      owner: webadmin
+      group: webadmin
+      mode: 0644
+    notify: Restart Nginx
+
+  - name: Copy index file
+    template:
+      src: index.html.j2
+      dest: /usr/share/nginx/html/index.html
+      owner: webadmin
+      group: webadmin
+      mode: 0644
+    tags:
+    - always 
+    notify: Restart nginx
+
+- name: Install and configure HAProxy !
+  hosts: haproxy
+  become: true
+  tasks:
+  - name: Install HAProxy !
+    apt:
+      name: haproxy
+      state: present
+      update_cache: true
+
+  - name: Configure HAProxy !  
+    copy:
+        src: haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: 0644
+    notify: Reload HAProxy      
+
+  - name: Replace HAProxy hard coded server ips !
+    replace:
+      path: /etc/haproxy/haproxy.cfg
+      regexp: '{{item.From}}'
+      # Line to Replace with
+      replace: '{{item.To}}'
+    with_items:
+      - { From: 'SERVER1_IP', To: '{{ansible_host1}}'}
+      - { From: 'SERVER2_IP', To: '{{ansible_host2}}'}
+    notify: Reload HAProxy     
+
+  - name: Ensure HAProxy is running !
+    service:
+      name: haproxy
+      state: started
+      enabled: yes
+
+  handlers:
+      
+  - name: restart HAProxy
+    service: name=haproxy state=restarted    
+  - name: Reload HAProxy
+    service:
+      name: haproxy
+      state: reloaded     
